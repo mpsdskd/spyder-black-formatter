@@ -145,11 +145,14 @@ class BlackFormatterPlugin(BasePluginClass):
     def __init__(self, main):
         print("ENTRO")
         super(BlackFormatterPlugin, self).__init__(main)
-        self.dockwidget = DummyDock()
+        self.dockwidget = None #DummyDock()
 
     # --- SpyderPluginWidget API ----------------------------------------------
     def get_plugin_title(self):
-        """Return widget title."""
+        """Return widget title."""class DummyDock:
+    def close(self):
+        pass
+
         return _("Black formatter")
 
     def get_plugin_icon(self):
@@ -221,7 +224,7 @@ class BlackFormatterPlugin(BasePluginClass):
         )
 
         # Run Black
-        line_length = self.get_option("line_length", 80)
+        line_length = int(self.get_option("line_length", 80))
         skip_string = self.get_option("skip_string_normalization", False)
         target = []
         for v in target_version:
@@ -234,19 +237,25 @@ class BlackFormatterPlugin(BasePluginClass):
             string_normalization=not skip_string,
             is_pyi=False,
         )
+        try:
+            text_after = format_str(text_before, mode=mode)
+            success = True
+        except Exception as e:
+            logger.error(e)
+        
+        if success:
+            # Apply new text if needed
+            if text_before != text_after:
+                cursor.insertText(text_after)  # Change text
 
-        text_after = format_str(text_before, mode=mode)
+            cursor.endEditBlock()  # End cancel block
 
-        # Apply new text if needed
-        if text_before != text_after:
-            cursor.insertText(text_after)  # Change text
+            # Select changed text
+            position_end = cursor.position()
+            cursor.setPosition(position_start, QTextCursor.MoveAnchor)
+            cursor.setPosition(position_end, QTextCursor.KeepAnchor)
+            editor.setTextCursor(cursor)
 
-        cursor.endEditBlock()  # End cancel block
-
-        # Select changed text
-        position_end = cursor.position()
-        cursor.setPosition(position_start, QTextCursor.MoveAnchor)
-        cursor.setPosition(position_end, QTextCursor.KeepAnchor)
-        editor.setTextCursor(cursor)
-
-        self.main.statusBar().showMessage(_("Black formatting finished !"))
+            self.main.statusBar().showMessage(_("Black formatting finished!"))
+        else:
+            self.main.statusBar().showMessage(_("Black formatting failed :("))
