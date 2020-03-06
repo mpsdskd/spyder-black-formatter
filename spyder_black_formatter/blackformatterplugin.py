@@ -8,12 +8,15 @@
 from qtpy.QtGui import QTextCursor
 from qtpy.QtWidgets import QVBoxLayout, QGroupBox, QGridLayout, QLabel
 from spyder.config.base import get_translation
-from spyder.config.gui import fixed_shortcut
 from spyder.utils.qthelpers import create_action
 from spyder.py3compat import to_text_string
 import qtawesome as qta
 
 """black formatter Plugin."""
+
+import logging
+logger = logging.getLogger(__name__)
+logger.info("Loading Black Formatter...")
 
 # Standard library imports
 import sys
@@ -160,9 +163,9 @@ class BlackFormatterPlugin(BasePluginClass):
             self.main,
             _("Format code using Black"),
             icon=self.get_plugin_icon(),
+            shortcut="Shift+F5",
             triggered=self.run_black,
         )
-        fixed_shortcut("Shift+F5", self.main, self.run_black)
         self.main.source_menu_actions += [None, black_act]
         self.main.editor.pythonfile_dependent_actions += [black_act]
 
